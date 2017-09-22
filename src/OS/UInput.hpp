@@ -31,7 +31,7 @@ private:
 public:
     UInput();
     ~UInput();
-    void SendKey(char key);
+    void SendCode(unsigned code);
 };
 
 #endif // UINPUT_H
