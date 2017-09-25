@@ -30,7 +30,15 @@
 
 #include "/usr/include/linux/uinput.h"
 
+#include "LogFile.hpp"
 #include "UInput.hpp"
+
+#include <errno.h>
+#include <string.h>
+
+#ifndef _T
+#define _T(x) x
+#endif
 
 const char *dev_filename = "/dev/uinput";
 
@@ -47,14 +55,18 @@ UInput::UInput()
     
     if (fd < 0)
     {
-        // @todo log error & bail out here, don't just act as if everything is ok
+        const int error = errno;
+        LogFormat(_T("UInput Error @open %s: %s"), dev_filename, strerror(error));
+        _exit(-1);
         return;
     }
 
     if (ioctl(fd, UI_SET_EVBIT, EV_KEY) < 0)
     {
-        // @todo log error & bail
         fd = -1;
+        const int error = errno;
+        LogFormat(_T("UInput Error @UI_SET_EVBIT: %s"), strerror(error));
+        _exit(-1);
         return;
     }
     
@@ -62,21 +74,21 @@ UInput::UInput()
     {
         if (ioctl(fd, UI_SET_KEYBIT, key) < 0)
         {
-            // @todo - log error. continue as normal with the other successful keys
+            const int error = errno;
+            LogFormat(_T("UInput @UI_SET_KEYBIT for %d failed: %s"), key, strerror(error));
         }
     }
     
     struct uinput_user_dev uidev = {0};
-    //uisetup.id.bustype = BUS_USB;
-    //uisetup.id.vendor = 0x1234; // @todo - register something? use something reserved for unregistered devices
-    //uisetup.id.product = 0x5678;
     snprintf(uidev.name, UINPUT_MAX_NAME_SIZE, "tophat-fakekeyboard");
-    // UI_DEV_SETUP is too new for the TopHat default uinput.h headers/kernel?
+    // Not using UI_DEV_SETUP because TopHat uses too old kernel in CI VM
     write(fd, &uidev, sizeof(uidev));
     if (ioctl(fd, UI_DEV_CREATE) < 0)
     {
         fd = -1;
-        // @todo log error & bail out here, don't just act as if everything is ok
+        const int error = errno;
+        LogFormat(_T("UInput Error @UI_DEV_CREATE: %s"), strerror(error));
+        _exit(-1);
         return;
     }
 }
