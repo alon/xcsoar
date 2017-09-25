@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+import os
+import sys
 from time import sleep
 from socket import socket
 
@@ -28,7 +30,8 @@ def make_time_msg():
     return make_gps_msg('GPRMC', '091717,A,5103.5403,N,00741.5742,E,055.3,022.4,230610,000.3,W')
 
 # Read all the KEY_* definitions from the include file
-for l in open('/usr/include/linux/input-event-codes.h').readlines():
+module_dir = os.path.dirname(sys.modules[__name__].__file__)
+for l in open(os.path.join(module_dir, 'input-event-codes.h')).readlines():
     if not l.startswith('#define KEY_'):
         continue
     parts = l.split()
